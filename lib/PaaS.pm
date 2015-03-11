@@ -1,6 +1,7 @@
 package PaaS;
 
-use Paas::PrintjobParser qw(parse_printjob);
+use PaaS::PrintjobParser qw(parse_printjob);
+use PaaS::UserData;
 use Exporter qw(import);
 
 our $VERSION = '0.1';
@@ -11,17 +12,17 @@ sub run {
     # Tea4cups parameters
     my ($printername, $directory, $datafile, $jobsize, $md5sum, $clienthost, $jobid, $username, $title, $copies, $options, $inputfile, $billing, $controlfile) = @_;
 
+    # Parse Tea4cups job options
+    my $parsed_options = parse_options($options);
+
     # Get data about the user
-    my %user_data = get_user_data($clienthost, $username);
+    my %user_data = get_user_data($parsed_options->{'job-originating-host-name'}, $username);
 
     # Get all working printers
     my %working_printers = get_working_printers();
 
     # Get printjob data
     my $printjob_data = get_printjob_data($datafile);
-
-    # Parse Tea4cups job options
-    my $parsed_options = parse_options($options);
 
     # Merge tea4cups options and printjob hash
     merge_hashes($printjob_data, $parsed_options); # Merged into first argument
@@ -49,7 +50,9 @@ sub check_params {
     }
 }
 
-sub get_user_data {}
+sub get_user_data {
+    return PaaS::UserData::get_user_data(@_);
+}
 
 sub get_working_printers {}
 
@@ -57,7 +60,7 @@ sub get_working_printers {}
 # OUTPUT: a reference to a hash containing printjob key value pairs
 sub get_printjob_data {
     my $datafile = shift;
-    return PaaS::PrintjobParser::parse_printjob($datafile);
+    return parse_printjob($datafile);
 }
 
 # INPUT: a string containing options
@@ -67,7 +70,11 @@ sub parse_options {
     my %options = ();
     foreach(split / /, shift) {
         my @kv = split /=/;
-        $options{$kv[0]} = $kv[1];
+        if(scalar(@kv) == 2) { # There was a '=' sign.
+            $options{$kv[0]} = $kv[1];
+        } else {
+            $options{$kv[0]} = 1;
+        }
     }
 
     return \%options;
