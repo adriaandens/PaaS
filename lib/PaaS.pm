@@ -7,6 +7,7 @@ our $VERSION = '0.1';
 our @EXPORT = qw(run); # Subroutines to export
 
 sub run {
+    return -1 if !check_params(@_);
     # Tea4cups parameters
     my ($printername, $directory, $datafile, $jobsize, $md5sum, $clienthost, $jobid, $username, $title, $copies, $options, $inputfile, $billing, $controlfile) = @_;
 
@@ -37,6 +38,15 @@ sub run {
 
     # Print!
     print_job($datafile, $printer);
+}
+
+sub check_params {
+    my ($printername, $directory, $datafile, $jobsize, $md5sum, $clienthost, $jobid, $username, $title, $copies, $options, $inputfile, $billing, $controlfile) = @_;
+    if(!$printername || !$directory || !$datafile || !$jobsize || !$md5sum || !$clienthost || !$jobid || !$username || !$copies) {
+        return -1;
+    } else {
+        return 0;
+    }
 }
 
 sub get_user_data {}
