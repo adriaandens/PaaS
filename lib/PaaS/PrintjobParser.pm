@@ -7,7 +7,9 @@ our @EXPORT = qw(parse_printjob);
 # INPUT: Printjob filename
 # OUTPUT: a reference to a hash containing printjob data from the file
 sub parse_printjob {
+    print STDERR "Printjob filename: " . $_[0] . "\n";
     return -1 if scalar(@_) < 1 || ! -f $_[0];
+    print STDERR "This printjob is legit...\n";
     my $filename = shift;my $all = "";
 
     open( FILE, "<$filename" ) or die $!;
@@ -28,10 +30,10 @@ sub parse_printjob_data {
     my $all = shift;
     my %strc = ();
     my $type = 0;
-    my %desc = {
+    my %desc = ( 
         1 => "Postscript",
         2 => "PJL"
-    }
+    );
 
     # ---[ type matching ]---
     if ( $all =~ m/^%!/ ) {
@@ -68,10 +70,10 @@ sub print_printjob_data {
     # --- [ display result ]---
     my $strc_href = @_;
     my %strc = %$strc_href;
-    my %desc = {
+    my %desc = (
         1 => "Postscript",
         2 => "PJL"
-    }
+    );
 
     printf( "%-16s : %-20s\n", "Job format", $desc{$type} );
     foreach my $prop ( keys %strc ) {

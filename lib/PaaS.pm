@@ -1,13 +1,13 @@
 package PaaS;
 
-use Paas::PrintjobParser;
+use Paas::PrintjobParser qw(parse_printjob);
 use Exporter qw(import);
 
 our $VERSION = '0.1';
 our @EXPORT = qw(run); # Subroutines to export
 
 sub run {
-    return -1 if !check_params(@_);
+    return -1 if check_params(@_);
     # Tea4cups parameters
     my ($printername, $directory, $datafile, $jobsize, $md5sum, $clienthost, $jobid, $username, $title, $copies, $options, $inputfile, $billing, $controlfile) = @_;
 
@@ -42,9 +42,12 @@ sub run {
 
 sub check_params {
     my ($printername, $directory, $datafile, $jobsize, $md5sum, $clienthost, $jobid, $username, $title, $copies, $options, $inputfile, $billing, $controlfile) = @_;
+    print STDERR "$printername, $directory, $datafile, $jobsize, $md5sum, $clienthost, $jobid, $username, $title, $copies, $options, $inputfile, $billing, $controlfile\n";
     if(!$printername || !$directory || !$datafile || !$jobsize || !$md5sum || !$clienthost || !$jobid || !$username || !$copies) {
+        print STDERR "Something wrong with parameters for run()\n";
         return -1;
     } else {
+        print STDERR "Yay, everything is OK with the parameters.\n";
         return 0;
     }
 }
@@ -54,7 +57,9 @@ sub get_user_data {}
 sub get_working_printers {}
 
 sub get_printjob_data {
-    return parse_printjob(shift);
+    my $datafile = shift;
+    print "Datafile is: $datafile\n";
+    return PaaS::PrintjobParser::parse_printjob($datafile);
 }
 
 sub parse_options {}
