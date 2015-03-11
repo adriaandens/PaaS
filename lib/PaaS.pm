@@ -16,7 +16,7 @@ sub run {
     my $parsed_options = parse_options($options);
 
     # Get data about the user
-    my %user_data = get_user_data($parsed_options->{'job-originating-host-name'}, $username);
+    my $user_data = PaaS::UserData::get_user_data($parsed_options->{'job-originating-host-name'}, $username);
 
     # Get all working printers
     my %working_printers = get_working_printers();
@@ -50,11 +50,9 @@ sub check_params {
     }
 }
 
-sub get_user_data {
-    return PaaS::UserData::get_user_data(@_);
-}
+sub get_working_printers {
 
-sub get_working_printers {}
+}
 
 # INPUT: The filename which contains the printjob
 # OUTPUT: a reference to a hash containing printjob key value pairs
@@ -66,7 +64,7 @@ sub get_printjob_data {
 # INPUT: a string containing options
 # OUTPUT: a reference to a hash containing the options from the string
 sub parse_options {
-    # Example: finishings=3 number-up=1 job-uuid=urn:uuid:4041cb3c-b055-38f8-6f05-f0c2a76f2f81 job-originating-host-name=localhost time-at-creation=1425393352 time-at-processing=1425393352
+    # Example: finishings=3 number-up=1 XRGrayBalance job-uuid=urn:uuid:4041cb3c-b055-38f8-6f05-f0c2a76f2f81 job-originating-host-name=localhost time-at-creation=1425393352 time-at-processing=1425393352
     my %options = ();
     foreach(split / /, shift) {
         my @kv = split /=/;
