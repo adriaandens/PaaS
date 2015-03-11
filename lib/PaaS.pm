@@ -37,7 +37,7 @@ sub run {
     }
 
     # Print!
-    print_job($datafile, $printer);
+    return print_job($datafile, $printer);
 }
 
 sub check_params {
@@ -65,6 +65,10 @@ sub get_capable_printers {}
 
 sub sort_printers {}
 
-sub print_job {}
+# INPUT: Name of the file containing the printjob, and to which printer (the name of) to print
+# OUTPUT: Result code of print job
+sub print_job {
+    return 0;
+}
 
 1;
