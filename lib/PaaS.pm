@@ -42,12 +42,9 @@ sub run {
 
 sub check_params {
     my ($printername, $directory, $datafile, $jobsize, $md5sum, $clienthost, $jobid, $username, $title, $copies, $options, $inputfile, $billing, $controlfile) = @_;
-    print STDERR "$printername, $directory, $datafile, $jobsize, $md5sum, $clienthost, $jobid, $username, $title, $copies, $options, $inputfile, $billing, $controlfile\n";
     if(!$printername || !$directory || !$datafile || !$jobsize || !$md5sum || !$clienthost || !$jobid || !$username || !$copies) {
-        print STDERR "Something wrong with parameters for run()\n";
         return -1;
     } else {
-        print STDERR "Yay, everything is OK with the parameters.\n";
         return 0;
     }
 }
@@ -60,7 +57,6 @@ sub get_working_printers {}
 # OUTPUT: a reference to a hash containing printjob key value pairs
 sub get_printjob_data {
     my $datafile = shift;
-    print "Datafile is: $datafile\n";
     return PaaS::PrintjobParser::parse_printjob($datafile);
 }
 

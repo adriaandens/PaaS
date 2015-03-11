@@ -7,9 +7,7 @@ our @EXPORT = qw(parse_printjob);
 # INPUT: Printjob filename
 # OUTPUT: a reference to a hash containing printjob data from the file
 sub parse_printjob {
-    print STDERR "Printjob filename: " . $_[0] . "\n";
     return -1 if scalar(@_) < 1 || ! -f $_[0];
-    print STDERR "This printjob is legit...\n";
     my $filename = shift;my $all = "";
 
     open( FILE, "<$filename" ) or die $!;
