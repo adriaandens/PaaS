@@ -47,4 +47,11 @@ use PaaS;
     cmp_ok(scalar(keys %$hash), '==', 0, 'get_user_data() hash is empty');
 }
 
+# Test 9: get working printers
+{
+    use Data::Printer;
+    p PaaS::Printers::get_working_printers('printers.conf');
+}
+
 done_testing();
+

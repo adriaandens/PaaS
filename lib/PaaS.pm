@@ -2,6 +2,7 @@ package PaaS;
 
 use PaaS::PrintjobParser qw(parse_printjob);
 use PaaS::UserData;
+use PaaS::Printers;
 use Exporter qw(import);
 
 our $VERSION = '0.1';
@@ -19,7 +20,7 @@ sub run {
     my $user_data = PaaS::UserData::get_user_data($parsed_options->{'job-originating-host-name'}, $username);
 
     # Get all working printers
-    my %working_printers = get_working_printers();
+    my $working_printers = PaaS::Printers::get_working_printers();
 
     # Get printjob data
     my $printjob_data = get_printjob_data($datafile);
@@ -48,10 +49,6 @@ sub check_params {
     } else {
         return 0;
     }
-}
-
-sub get_working_printers {
-
 }
 
 # INPUT: The filename which contains the printjob
