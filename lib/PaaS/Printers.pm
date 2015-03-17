@@ -15,11 +15,27 @@ sub get_working_printers {
         foreach my $printer (keys %$cups_printers) {
             if($$cups_printers{$printer}->{Accepting} eq 'Yes') {
                 $working_printers{$printer} = $$cups_printers{$printer};
+                # Augment hash with domain name or IP address
+                $working_printers{$printer}->{HostURI} = get_hosturi($$cups_printers{$printer}->{DeviceURI});
             }
         }
     }
 
     return \%working_printers;
+}
+
+sub get_hosturi {
+    my $uri = shift;
+    my @known_prefixes = ('http://', 'ipp://');
+
+    my $hosturi = 'localhost';
+    foreach my $prefix (@known_prefixes) {
+        if($uri =~ m/^$prefix([^\/]+)/) {
+            $hosturi = $1;
+        }
+    }
+
+    return $hosturi;
 }
 
 sub parse_file {
@@ -34,7 +50,7 @@ sub parse_file {
             $current_printer = '';
         } elsif(m/^#/) {
             next;
-        } elsif(m/^(\w+) (\w+)$/) {
+        } elsif(m/^(\w+) ([^\s]+)$/) {
             $printers{$current_printer}->{$1} = $2 if $current_printer ne '';
         }
     }

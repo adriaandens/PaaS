@@ -3,6 +3,10 @@ package PaaS;
 use PaaS::PrintjobParser qw(parse_printjob);
 use PaaS::UserData;
 use PaaS::Printers;
+
+use Data::Printer;
+use Net::SNMP;
+use Net::SNMP::Util;
 use Exporter qw(import);
 
 our $VERSION = '0.1';
@@ -29,10 +33,10 @@ sub run {
     merge_hashes($printjob_data, $parsed_options); # Merged into first argument
 
     # Get all printers which are capable of doing the printjob
-    my %capable_printers = get_capable_printers(%printjob_data);
+    my $capable_printers = get_capable_printers($working_printers, $printjob_data);
 
     # Sort the printers on the metrics provided
-    my @sorted_printers = sort_printers(%capable_printers, %metrics);
+    my @sorted_printers = sort_printers($capable_printers);
     my $printer;
     if(@sorted_printers > 0) {
         $printer = $sorted_printers[0];
@@ -84,9 +88,63 @@ sub merge_hashes {
     }
 }
 
-sub get_capable_printers {}
+sub get_capable_printers {
+    my ($working_printers, $printjob_data) = @_;
+    my %capable_printers = ();
+    my $oids = ['1.3.6.1.2.1.25.3.2.1.1', '1.3.6.1.2.1.25.3.2.1.3', '1.3.6.1.2.1.25.3.2.1.5', '1.3.6.1.2.1.25.3.5.1.1', '1.3.6.1.2.1.25.3.5.1.2'];
 
-sub sort_printers {}
+    # For each printer
+    foreach my $printername (keys %$working_printers) {
+        my $printer = $working_printers->{$printername};
+        next if $printer->{HostURI} eq "localhost";
+        # Get SNMP Data
+        my ($session, $error) = Net::SNMP->session(-hostname => $printer->{HostURI}, -community => "public", -timeout  => "30", -port => "161");  
+        my $response = $session->get_request(-varbindlist => $oids); 
+
+        # Augment working_printers hash
+        foreach my $oid (keys %$response) {
+            $printer->{$oid} = $response->{$oid};
+        } 
+    
+        # Check if everything is OK with printer
+        if($printer->{"1.3.6.1.2.1.25.3.2.1.5"} == 2) {
+            # If print job needs color, check for color
+            if($printjob_data->{Color} && $printer->{ColorManaged}) {
+                $capable_printers{$printername} = $printer;
+            }
+
+            # Check other things, like is there enough paper, recto/verso, ink volume
+        }
+    }
+
+    p %capable_printers;
+    return \%capable_printers;
+}
+
+sub sort_printers {
+    my $capable_printers = shift;
+    p %$capable_printers;
+
+    # Ideally, get this out of some configuration file
+    my %metrics = {
+        "distance" => 5,
+        "speed" => 4,
+        "resolution" => 3,
+    };
+
+    foreach my $printer (keys %$capable_printers) {
+        # Get the distance from the user to the printer
+        # A* ...
+        my $distance = 123;
+        # Get the speed of the printer (pages per minute)
+        #
+        my $speed = 60;
+        # Get the resolution of the printer
+        my $resolution = 600;
+
+        my $weight = $metrics{distance}*$distance + $metrics{speed}*$speed + $metrics{resolution}*$resolution;
+    }
+}
 
 # INPUT: Name of the file containing the printjob, and to which printer (the name of) to print
 # OUTPUT: Result code of print job
