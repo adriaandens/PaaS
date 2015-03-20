@@ -49,8 +49,12 @@ use PaaS;
 
 # Test 9: get working printers
 {
-    use Data::Printer;
-    p PaaS::Printers::get_working_printers('printers.conf');
+    PaaS::Printers::get_working_printers('printers.conf');
+}
+
+# Test 10: get capable printers
+{
+    PaaS::get_capable_printers(PaaS::Printers::get_working_printers('printers.conf'), PaaS::get_printjob_data("Postscript.job"));
 }
 
 done_testing();

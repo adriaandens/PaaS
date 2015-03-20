@@ -32,6 +32,8 @@ sub run {
     # Merge tea4cups options and printjob hash
     merge_hashes($printjob_data, $parsed_options); # Merged into first argument
 
+    # Only allow printers where the user has rights to print
+
     # Get all printers which are capable of doing the printjob
     my $capable_printers = get_capable_printers($working_printers, $printjob_data);
 
