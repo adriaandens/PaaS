@@ -7,24 +7,21 @@ use PaaS::Printers;
 use Data::Printer;
 use Net::SNMP;
 use Net::SNMP::Util;
+use Time::HiRes;
 use Exporter qw(import);
 
 our $VERSION = '0.1';
-our @EXPORT = qw(run); # Subroutines to export
+our @EXPORT = qw(run get_jobstate set_jobstate); # Subroutines to export
 
 sub run {
     return -1 if check_params(@_);
     # Tea4cups parameters
     my ($printername, $directory, $datafile, $jobsize, $md5sum, $clienthost, $jobid, $username, $title, $copies, $options, $inputfile, $billing, $controlfile) = @_;
+    set_jobstate($jobid, "received");
 
-    # Parse Tea4cups job options
+    # Phase 1: Parse Tea4cups job options
+    set_jobstate($jobid, "processing");
     my $parsed_options = parse_options($options);
-
-    # Get data about the user
-    my $user_data = PaaS::UserData::get_user_data($parsed_options->{'job-originating-host-name'}, $username);
-
-    # Get all working printers
-    my $working_printers = PaaS::Printers::get_working_printers();
 
     # Get printjob data
     my $printjob_data = get_printjob_data($datafile);
@@ -32,20 +29,39 @@ sub run {
     # Merge tea4cups options and printjob hash
     merge_hashes($printjob_data, $parsed_options); # Merged into first argument
 
+    # Phase 2: Get data about the user by quering LDAP
+    my $user_data = PaaS::UserData::get_user_data($parsed_options->{'job-originating-host-name'}, $username);
+
+    # Phase 3: Get all working printers
+    my $working_printers = PaaS::Printers::get_working_printers();
+
+    # Phase 4: 
     # Only allow printers where the user has rights to print
+    my $allowed_printers = get_authorised_printers($working_printers);
 
     # Get all printers which are capable of doing the printjob
-    my $capable_printers = get_capable_printers($working_printers, $printjob_data);
+    my $capable_printers = get_capable_printers($allowed_printers, $printjob_data);
 
     # Sort the printers on the metrics provided
     my @sorted_printers = sort_printers($capable_printers);
-    my $printer;
-    if(@sorted_printers > 0) {
-        $printer = $sorted_printers[0];
+
+    # Phase 5: Check if best printer accepts
+    my $i = 0;
+    if(accepts_print_job($sorted_printers[$i])) {
+        # Phase 9: Send job to printer queue
+        print_job($datafile, $printer);
+        set_jobstate($jobid, "in printer queue");
+    } else {
+        if($i + 1 < scalar(@sorted_printers)) {
+            # Phase 7
+            $i++;
+        } else {
+            # Phase 8
+            notify_user("No printer could be found for your print job '$title'");
+        }
     }
 
-    # Print!
-    return print_job($datafile, $printer);
+    return 0;
 }
 
 sub check_params {
@@ -55,6 +71,48 @@ sub check_params {
     } else {
         return 0;
     }
+}
+
+# There are still some issues here with concurrency, but it's good
+# enough for now...
+sub get_jobstate {
+    my ($jobid, $state) = shift, '';
+    while(-f "jobs_and_states.lock") {
+        usleep(1000*50); # Sleep 50ms
+    }
+    open(FH, "< jobs_and_states");
+    while(<FH>) {
+        $state = $1 if m/^$jobid,(\w+)$/;
+    }
+    close(FH);
+
+    return $state;
+}
+
+# There are still some issues here with concurrency, but it's good
+# enough for now...
+sub set_jobstate {
+    (my $jobid, $state) = @_;
+    my @lines = ();
+    while(-f "jobs_and_states.lock") { # Other writer, wait until he is done
+        usleep(1000*50); # Sleep 50ms
+    }
+    open(FH, "> job_and_states.lock"); close(FH);
+    open(RFH, "< jobs_and_states");
+    while(<RFH>) {
+        push(@lines, $_);
+    }
+    close(RFH);
+    open(WFH, "> jobs_and_states");
+    foreach(@lines) {
+        if(m/^$jobid,\w+$/) {
+            print WFH "$jobid,$state\n";
+        } else {
+            print WFH $_;
+        }
+    }
+    close(WFH);
+    unlink("jobs_and_states.lock");
 }
 
 # INPUT: The filename which contains the printjob
@@ -121,6 +179,11 @@ sub get_capable_printers {
 
     p %capable_printers;
     return \%capable_printers;
+}
+
+sub get_authorised_printers {
+    my $a = shift;
+    return $a;
 }
 
 sub sort_printers {
