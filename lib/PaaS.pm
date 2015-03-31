@@ -3,6 +3,7 @@ package PaaS;
 use PaaS::PrintjobParser qw(parse_printjob);
 use PaaS::UserData;
 use PaaS::Printers;
+use PaaS::Profiles;
 
 use Data::Printer;
 use Net::SNMP;
@@ -187,27 +188,10 @@ sub get_authorised_printers {
 }
 
 sub sort_printers {
-    my $capable_printers = shift;
-    p %$capable_printers;
-
-    # Ideally, get this out of some configuration file
-    my %metrics = {
-        "distance" => 5,
-        "speed" => 4,
-        "resolution" => 3,
-    };
+    my ($capable_printers, $profile, $user_preference) = @_;
 
     foreach my $printer (keys %$capable_printers) {
-        # Get the distance from the user to the printer
-        # A* ...
-        my $distance = 123;
-        # Get the speed of the printer (pages per minute)
-        #
-        my $speed = 60;
-        # Get the resolution of the printer
-        my $resolution = 600;
 
-        my $weight = $metrics{distance}*$distance + $metrics{speed}*$speed + $metrics{resolution}*$resolution;
     }
 }
 
