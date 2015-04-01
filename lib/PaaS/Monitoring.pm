@@ -6,6 +6,7 @@ use Exporter qw(import);
 our $VERSION = '0.1';
 our @EXPORT = qw(monitor_printers);
 
+# I use a standard IPP test file, I only changed the job-id to job-uuid because it's more unique
 sub monitor_printers {
     # Use IPPtool to get state of printers
     foreach my $printer (keys %$printers) {
@@ -25,5 +26,5 @@ sub monitor_printers {
     }
 
     # Looks like:
-    # job-id job-state job-name job-originating-user-name job-impressions job-impressions-completed job-media-sheets job-media-sheets-completed
+    # job-uuid job-state job-name job-originating-user-name job-impressions job-impressions-completed job-media-sheets job-media-sheets-completed
 }

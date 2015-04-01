@@ -18,7 +18,7 @@ sub run {
     return -1 if check_params(@_);
     # Tea4cups parameters
     my ($printername, $directory, $datafile, $jobsize, $md5sum, $clienthost, $jobid, $username, $title, $copies, $options, $inputfile, $billing, $controlfile) = @_;
-    set_jobstate($jobid, "received");
+    set_jobstate($jobid, "pending");
 
     # Phase 1: Parse Tea4cups job options
     set_jobstate($jobid, "processing");
@@ -43,15 +43,15 @@ sub run {
     # Get all printers which are capable of doing the printjob
     my $capable_printers = get_capable_printers($allowed_printers, $printjob_data);
 
-    # Sort the printers on the metrics provided
-    my @sorted_printers = sort_printers($capable_printers,$parsed_options{profile},$user_data->{user_pref});
+    # Sort the printers on the profiles provided
+    my $sorted_printers = sort_printers($capable_printers,$parsed_options{profile},$user_data->{user_pref});
 
     # Phase 5: Check if best printer accepts
     my $i = 0;
-    if(accepts_print_job($sorted_printers[$i])) {
+    if(accepts_print_job(${$sorted_printers}[$i], $capable_printers)) {
         # Phase 9: Send job to printer queue
         print_job($datafile, $printer);
-        set_jobstate($jobid, "in printer queue");
+        set_jobstate($jobid, "queued");
     } else {
         if($i + 1 < scalar(@sorted_printers)) {
             # Phase 7
@@ -69,6 +69,15 @@ sub check_params {
     my ($printername, $directory, $datafile, $jobsize, $md5sum, $clienthost, $jobid, $username, $title, $copies, $options, $inputfile, $billing, $controlfile) = @_;
     if(!$printername || !$directory || !$datafile || !$jobsize || !$md5sum || !$clienthost || !$jobid || !$username || !$copies) {
         return -1;
+    } else {
+        return 0;
+    }
+}
+
+sub accepts_print_job {
+    my ($printer, $printers) = shift;
+    if($printers->{$printer}->{Accepting} eq 'Yes') {
+        return 1;
     } else {
         return 0;
     }
