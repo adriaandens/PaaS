@@ -8,6 +8,7 @@ our @EXPORT = qw(monitor_printers);
 
 # I use a standard IPP test file, I only changed the job-id to job-uuid because it's more unique
 sub monitor_printers {
+    my $printers = shift;
     # Use IPPtool to get state of printers
     foreach my $printer (keys %$printers) {
         my $ip = ${$printers}{$printer}->{ipaddr};
