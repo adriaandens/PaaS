@@ -44,7 +44,7 @@ sub run {
     my $capable_printers = get_capable_printers($allowed_printers, $printjob_data);
 
     # Sort the printers on the metrics provided
-    my @sorted_printers = sort_printers($capable_printers);
+    my @sorted_printers = sort_printers($capable_printers,$parsed_options{profile},$user_data->{user_pref});
 
     # Phase 5: Check if best printer accepts
     my $i = 0;
@@ -189,10 +189,7 @@ sub get_authorised_printers {
 
 sub sort_printers {
     my ($capable_printers, $profile, $user_preference) = @_;
-
-    foreach my $printer (keys %$capable_printers) {
-
-    }
+    return PaaS::Profiles::perform_profile($profile, $capable_printers, $user_preference);
 }
 
 # INPUT: Name of the file containing the printjob, and to which printer (the name of) to print

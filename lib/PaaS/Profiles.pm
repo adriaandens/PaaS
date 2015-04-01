@@ -6,7 +6,7 @@ our @EXPORT = qw();
 
 # Ideally, do this with subclasses
 sub perform_profile {
-    my ($profile, $printers) = @_;
+    my ($profile, $printers, $userpref) = @_;
     my @sorted_printers = ();
     if($profile eq 'quickest') {
         my %printerprofilevalues = (); # Contains printer -> metric
@@ -60,7 +60,7 @@ sub perform_profile {
         my %printerprofilevalues = (); # Contains printer -> metric
         # foreach printer do metric
         foreach my $printer (keys %$printers) {
-            my $metric = empiric(${$printers}{$printer}, $printers);
+            my $metric = empiric(${$printers}{$printer}, $printers, $userpref);
             $printerprofilevalues{$printer} = $metric;
         }
         # sort array, higher is better
@@ -115,7 +115,7 @@ sub normalisation {
     return $metric;
 }
 sub empiric {
-    my ($printer, $prs) = @_;
+    my ($printer, $prs, $user_pref) = @_;
     my %printers = %$prs;
     my $distance = $printers{$printer}->{distance};
     my $queue = $printers{$printer}->{queue};
